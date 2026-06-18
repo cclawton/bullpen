@@ -1,0 +1,123 @@
+id: example-blog
+name: "Example Blog"
+description: "Long-form reflective essays for a personal blog. Demonstrates the structure analyst and full polishing pipeline on 800-1500 word pieces."
+
+# --- Voice & Personality ---
+voice:
+  tone: "Reflective, conversational, analytical."
+  register: "Personal essayist writing to think, not to sell. Avoid corporate hedge-language."
+  humour_style: "Dry and sparing. Implicit irony. Humour serves the reflection, not the other way around."
+  spelling: "British English"  # change to American/Australian as you prefer
+  banned_words:
+    - delve
+    - synergy
+    - leverage  # as a verb
+    - unlock value
+    - solutions  # in the vendor sense
+    - journey  # for any professional activity
+    - game-changer
+    - thought leader
+    - disrupt
+  style_notes: |
+    - First-person, willing to leave questions open
+    - Variable sentence length — fragments for punctuation, longer sentences for reasoning
+    - Anecdote opens, argument follows
+    - Short-to-medium paragraphs (4–6 sentences), section headers as roadmap
+    - Direct terms over abstractions
+    - Honest about limitations and uncertainty
+
+# --- Content Constraints ---
+content:
+  format: "blog_post"
+  word_count: 1200
+  word_count_hard_max: 1800
+  word_count_min: 600
+  link_density: "3–10 inline links per post; link to primary sources"
+  structure: |
+    Reflective essay (default ~1000–1500 words):
+    - Anecdote or scene-setting opener (1–2 short paragraphs)
+    - Thesis framing
+    - 3–5 section-headed beats (## headers), each a distinct facet of the argument
+    - Honest close — connect back to the opening, or leave the question deliberately open
+  credits_section: false
+  audience: "Curious general readers who follow you directly. Assumes curiosity, not specialist knowledge."
+
+# --- Platform & Publishing ---
+platform:
+  type: blog
+  publication_url: "https://example.com"  # set to your blog URL
+  image_specs:
+    width: 1456
+    height: 816
+    aspect_ratio: "16:9"
+
+# --- Pipeline ---
+pipeline:
+  default_order:
+    - research
+    - draft
+    - structure
+    - rhythm
+    - trimmer
+    - safety
+    - image
+  optional:
+    - image
+
+# --- Agent Overrides ---
+agents:
+  orchestrator:
+    personality: "Unhurried, reflective editor of a personal blog. Favours depth over speed."
+  researcher:
+    name: "Researcher"
+    source_priorities:
+      - "Primary sources: named essays, company statements, official documents"
+      - "Quality long-form journalism"
+      - "Named thinkers in the subject area — cite directly"
+      - "Academic papers where relevant"
+  drafter:
+    name: "Drafter"
+    # No override_prompt — uses the generic drafter agent.
+    # To add a custom voice, create profiles/example-blog/agents/my-drafter.md
+    # and set override_prompt: "agents/my-drafter.md"
+  structure:
+    name: "Structure Analyst"
+    enabled: true  # Long-form essays benefit most from structural analysis.
+  rhythm:
+    name: "Rhythm Polisher"
+    enabled: true
+  trimmer:
+    name: "Trimmer"
+    enabled: true
+    target_cut: "15-25%"  # lighter; essay form earns its length
+  humour:
+    enabled: false  # Reflective essays use dry implicit humour, not punchlines.
+  safety:
+    name: "Safety Reviewer"
+    enabled: true
+    employer: "Self"  # set to your employer for employment-sensitivity checks
+    employer_constraints: |
+      - This is personal writing, not employer communication
+      - No confidential information
+      - Clearly personal opinion on contested topics
+    legal_jurisdiction: "Your jurisdiction"  # e.g. "United Kingdom", "Australia"
+    legal_notes: "Defamation law, contempt of court, suppression orders. Quoted figures need accurate attribution."
+  image:
+    name: "Image Prompter"
+    enabled: true
+    visual_style: "Photographic or painterly. Considered, not slick."
+  idea_miner:
+    name: "Idea Miner"
+    enabled: true
+
+# --- Obsidian Integration ---
+obsidian:
+  vault_base: "Content/example-blog"  # set to your vault folder
+  folders:
+    ideas: "ideas"
+    articles: "articles"
+
+# --- Idea Sources ---
+idea_sources:
+  obsidian_scan: true
+  comment_mining: []

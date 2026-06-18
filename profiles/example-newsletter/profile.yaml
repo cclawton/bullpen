@@ -1,0 +1,113 @@
+id: example-newsletter
+name: "Example Newsletter"
+description: "Short-form opinion pieces for a newsletter. Demonstrates a lean pipeline on 400-600 word posts."
+
+# --- Voice & Personality ---
+voice:
+  tone: "Opinionated, direct, conversational."
+  register: "Smart but accessible. Conversation, not lecture."
+  humour_style: "Optional. Dry observations, never forced."
+  spelling: "British English"  # change to your preference
+  banned_words:
+    - delve
+    - unpack
+    - nuanced
+    - robust
+    - ecosystem
+    - synergy
+  style_notes: |
+    - Conversational, not academic
+    - Primary sources over secondary
+    - Short paragraphs (2-4 sentences, mobile-first)
+    - Opinionated but fair — steelman the opposition
+    - Write for someone who reads widely and isn't a specialist
+
+# --- Content Constraints ---
+content:
+  format: "newsletter_article"
+  word_count: 500
+  word_count_hard_max: 600
+  link_density: "5-12 inline links per article"
+  structure: |
+    1. Hook (1-2 sentences): stat, fact, or question that grabs
+    2. Argument (3-4 short paragraphs): thesis with sourced evidence
+    3. Kicker (1-2 sentences): provocative question or callback to hook
+  credits_section: false
+  audience: "Engaged readers who follow current affairs and don't mind an opinion"
+
+# --- Platform & Publishing ---
+platform:
+  type: substack  # or "newsletter", "blog", etc.
+  publication_url: "https://yourpub.substack.com"
+  image_specs:
+    width: 1456
+    height: 816
+    aspect_ratio: "16:9"
+
+# --- Pipeline ---
+pipeline:
+  default_order:
+    - research
+    - draft
+    - trimmer
+    - safety
+  optional:
+    - structure
+    - humour
+    - image
+
+# --- Agent Overrides ---
+agents:
+  orchestrator:
+    personality: "Efficient newsroom editor. Direct, no fluff."
+  researcher:
+    name: "Researcher"
+    source_priorities:
+      - "Primary data sources (government statistics, official reports)"
+      - "Quality journalism"
+      - "Think tanks and research institutes"
+      - "International bodies (where relevant)"
+  drafter:
+    name: "Drafter"
+    # No override_prompt — uses the generic drafter.
+  structure:
+    enabled: false  # Posts are short; structural analysis usually overkill. Enable per-article for a longer piece.
+  rhythm:
+    name: "Rhythm Polisher"
+    enabled: true
+  trimmer:
+    name: "Trimmer"
+    enabled: true
+    target_cut: "20-30%"
+  humour:
+    enabled: false  # Enable if your newsletter has a satirical voice.
+    comedy_style: ""
+  safety:
+    name: "Safety Reviewer"
+    enabled: true
+    employer: "Self"
+    employer_constraints: |
+      - No confidential information
+      - No competitive disparagement
+      - Clearly personal opinion on contested topics
+    legal_jurisdiction: "Your jurisdiction"
+    legal_notes: "Defamation law, contempt of court, suppression orders."
+  image:
+    name: "Image Prompter"
+    enabled: false  # Most newsletters don't need a header image. Enable if yours does.
+    visual_style: ""
+  idea_miner:
+    name: "Idea Miner"
+    enabled: true
+
+# --- Obsidian Integration ---
+obsidian:
+  vault_base: "Content/example-newsletter"
+  folders:
+    ideas: "ideas"
+    articles: "articles"
+
+# --- Idea Sources ---
+idea_sources:
+  obsidian_scan: true
+  comment_mining: []
