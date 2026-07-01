@@ -113,10 +113,6 @@ All article content lives in your Obsidian vault (via the Local REST API plugin)
 cache/<profile-id>/articles/<slug>/  ← mirror of the above, git-tracked
 ```
 
-## Phone notifications
-
-When an agent runs longer than 3 minutes (configurable), the orchestrator can ping your phone via [ntfy](https://ntfy.sh). Useful when you walk away during a long research or draft pass. See `CLAUDE.md` for the full spec.
-
 ## Scripts
 
 | Script | Purpose |
@@ -144,3 +140,7 @@ MIT. See `LICENSE`.
 ## Architecture notes
 
 For implementation details, design decisions, and conventions for modifying agent prompts, see `CLAUDE.md`.
+
+## Part of a connected stack
+
+bullpen is the creative output layer. The supervisor agent (github.com/cclawton/supervisor) monitors bullpen draft output via the filesystem — when all pipeline stages complete on a draft, the supervisor classifies it and signals the author. Two independent systems, one shared filesystem, no direct coupling. See also: hexapla (github.com/cclawton/hexapla), asian-sentry-techniques (github.com/cclawton/asian-sentry-techniques), podcastindex-mcp-server (github.com/cclawton/podcastindex-mcp-server)
