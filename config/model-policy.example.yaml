@@ -1,0 +1,56 @@
+# Example Bullpen role-to-model routing policy.
+# Copy to config/model-policy.yaml and adjust for providers you have configured.
+# Never put API keys in this file.
+
+version: 1
+status: example
+
+providers:
+  openrouter:
+    purpose: "Cross-provider models and fallbacks through OpenCode"
+    setup: "opencode auth login"
+  openai-chatgpt:
+    purpose: "Optional first-party ChatGPT browser authentication in OpenCode"
+    setup: "opencode auth login"
+
+defaults:
+  provider: openrouter
+  model: openrouter/z-ai/glm-5.2
+
+roles:
+  orchestrator:
+    primary:
+      provider: openrouter
+      model: openrouter/z-ai/glm-5.2
+
+  researcher:
+    primary:
+      provider: openai-chatgpt
+      model: openai/gpt-5.4-mini
+    fallback:
+      provider: openrouter
+      model: openrouter/z-ai/glm-5.2
+
+  drafter:
+    primary:
+      provider: openrouter
+      model: openrouter/z-ai/glm-5.2
+    fallback:
+      provider: openai-chatgpt
+      model: openai/gpt-5.4-mini
+
+  trimmer:
+    primary:
+      provider: openrouter
+      model: openrouter/z-ai/glm-5-turbo
+    fallback:
+      provider: openrouter
+      model: openrouter/z-ai/glm-5.2
+
+  safety-reviewer:
+    primary:
+      provider: openrouter
+      model: openrouter/anthropic/claude-opus-4.6
+    fallback:
+      provider: openrouter
+      model: openrouter/z-ai/glm-5.2

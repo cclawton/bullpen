@@ -1,8 +1,8 @@
 # Bullpen
 
-A profile-driven AI writing pipeline built on Claude Code subagents.
+A profile-driven AI writing pipeline with bounded OpenCode stages, role-specific model routing, and optional Claude Code compatibility.
 
-Multiple specialist agents — researcher, drafter, structure analyst, rhythm polisher, trimmer, humour polisher, safety reviewer, image prompter — collaborate under an orchestrator that talks to the human editor at every step. Each agent has one job. Personality and voice are configured per profile, not hardcoded into the agents.
+Multiple specialist agents collaborate under a profile-driven workflow. The production-style OpenCode runner executes research, drafting, trimming, and safety as separate bounded processes. A deterministic Python layer owns validation and file writes, while `config/model-policy.example.yaml` chooses a model for each role. The original Claude Code agents remain available for interactive use.
 
 The metaphor is a baseball bullpen: specialist relievers sitting ready, called in by the manager when the situation demands them.
 
@@ -22,9 +22,9 @@ The metaphor is a baseball bullpen: specialist relievers sitting ready, called i
    research.md draft.md  analysis  draft.md  draft.md  draft.md
 ```
 
-Each agent reads the active profile, optionally adopts a personality override, does its job, and writes its output. The orchestrator syncs everything to Obsidian and commits to git.
+Each model receives only the context for one stage and returns a complete replacement between bounded sentinels. The runner validates the result and applies it transactionally. Models never independently explore or edit the filesystem.
 
-The editor decides what runs next. There is no fixed pipeline.
+The bounded runner uses a fixed four-stage safety sequence. The legacy interactive orchestrator remains editor-directed.
 
 ## Quick start
 
@@ -35,20 +35,39 @@ cd bullpen
 # 1. Install dependencies
 pip install -r requirements.txt
 
-# 2. Set up environment
+# 2. Set up environment and provider authentication
 cp .env.example .env
-# edit .env with your Anthropic API key and Obsidian REST API credentials
+# edit .env with any Obsidian or publishing credentials you use
+# configure OpenCode providers with: opencode auth login
 
 # 3. Set up Obsidian
 # Install the "Local REST API" plugin in Obsidian and create an API key.
 # Create the folder in your vault: Content/example-blog/articles/
 
-# 4. Pick a profile and launch
+# 4. Create an article directory containing research.md and draft.md,
+# then run the bounded mixture-of-models pipeline
+python3 -m scripts.bullpen_runtime.opencode_pipeline \
+  "/absolute/path/to/article-directory" \
+  --profile example-blog
+```
+
+The example policy routes research, drafting, trimming, and safety to role-appropriate models with ordered fallbacks. Copy it to `config/model-policy.yaml`, customise it, and pass `--policy config/model-policy.yaml`. Use `--model <provider/model>` only for deliberate single-model experiments.
+
+For the legacy interactive workflow:
+
+```bash
 export WRITERS_ROOM_PROFILE=example-blog
 claude --agent orchestrator
 ```
 
-The orchestrator will greet you, show available profiles, and ask what you want to do.
+## OpenCode pipeline safety contract
+
+- Every stage runs in a fresh process.
+- OpenCode emits machine-readable JSON text events.
+- The runner accepts only content between `<<<WR_OUTPUT>>>` and `<<<END_WR_OUTPUT>>>`.
+- Invalid output is rolled back and receives one bounded correction retry.
+- The next stage starts only after the target digest changes and invariants pass.
+- The publication marker and internal stage notes are validated before acceptance.
 
 ## The agents
 
@@ -65,7 +84,7 @@ The orchestrator will greet you, show available profiles, and ask what you want 
 | **image-prompter** | Generates header image prompts for the published piece. |
 | **idea-miner** | Mines Obsidian notes and comments for article ideas, deduplicated against the backlog. |
 
-All agents live in `.claude/agents/`. They're generic — they adapt to the active profile at runtime.
+Bounded OpenCode agents live in `.opencode/agent/`; interactive Claude agents live in `.claude/agents/`. Both are generic and adapt to the active profile at runtime.
 
 ## Profiles
 
@@ -122,14 +141,17 @@ cache/<profile-id>/articles/<slug>/  ← mirror of the above, git-tracked
 | `scripts/generate_image.py` | Image generation via FAL/OpenAI/Ideogram |
 | `scripts/publish.py` | Publishing workflow |
 | `scripts/migrate_article.py` | Article migration utility |
+| `scripts/bullpen_runtime/opencode_pipeline.py` | Bounded multi-model OpenCode pipeline |
 
 ## Requirements
 
-- [Claude Code](https://claude.com/claude-code) (CLI)
+- [OpenCode](https://opencode.ai/) (CLI) for the bounded multi-model pipeline
+- [Claude Code](https://claude.com/claude-code) (optional legacy interactive workflow)
 - [Obsidian](https://obsidian.md) with the [Local REST API](https://github.com/coddingtonbear/obsidian-local-rest-api) plugin
 - Python 3.10+
-- API keys:
-  - Anthropic (required)
+- Provider authentication configured through OpenCode (requirements depend on your model policy)
+- Optional API keys:
+  - Anthropic (only if your chosen route uses the Anthropic API)
   - Image generation (optional — FAL, OpenAI, or Ideogram)
   - Substack credentials (optional — only for Substack publishing)
 
