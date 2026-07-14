@@ -145,7 +145,6 @@ When modifying subagent prompts:
 - All git operations on cache
 - All Obsidian API reads and writes
 - Updating todo.md, creating directories
-- Sending ntfy phone notifications on subagent completion (see below)
 
 **Once a subagent is launched, it runs uninterrupted to completion.**
 
@@ -154,50 +153,16 @@ When modifying subagent prompts:
 - Moving to the next pipeline step
 - Publishing or generating images
 
-## Phone Notifications (ntfy)
-
-When a subagent finishes a long-running task and the editor may have wandered off, the orchestrator can ping their phone via `~/bin/ntfy-send.sh`. Only the orchestrator does this — subagents don't have `Bash` access, so notifications are a boundary concern handled at dispatch/return boundaries.
-
-**Trigger:** subagent elapsed time ≥ threshold (default **3 minutes** — few humans watch a spinner that long). Also fires on subagent failure and on safety-reviewer findings that need human review. Doesn't fire for file reads, cache commits, profile switches, or anything the editor triggered inside the same minute.
-
-**Config (env vars):**
-
-| Var | Default | Purpose |
-|---|---|---|
-| `WRITERS_ROOM_NTFY_ENABLED` | `1` | Set to `0` or `false` to disable all pings |
-| `WRITERS_ROOM_NTFY_THRESHOLD_SEC` | `180` | Override the 3-minute elapsed-time threshold |
-
-The ntfy topic is read from `~/.config/ntfy/topic` by the script. If the topic file is missing, the script is missing, or the POST fails, the orchestrator logs a one-line warning and continues — notifications never block the pipeline.
-
-**Message conventions:**
-
-- **Title:** `[<profile-id>] <agent-role> done: <slug>` (scannable on a locked phone)
-- **Tags:** `<profile-id>,<agent-role>` (render as labels/emoji on the receiver)
-- **Priority:**
-  - `default` — step completed, next step gated on editor approval
-  - `high` — safety flag or unexpected output needing attention
-  - `urgent` — subagent failure or sync failure
-  - `low` — purely informational (rare; prefer not sending)
-
-Full spec and examples live in `.claude/agents/orchestrator.md` under "Phone Notifications (ntfy)".
-
-The ntfy transport is optional. To use it:
-1. Install [ntfy](https://ntfy.sh) on your phone and pick a topic
-2. Put your topic in `~/.config/ntfy/topic` (one line, no secrets)
-3. Create `~/bin/ntfy-send.sh` — a small wrapper that POSTs to your topic
-4. Or set `WRITERS_ROOM_NTFY_ENABLED=0` to disable
-
 ## Environment
 
-Needs `.env` with:
-- `ANTHROPIC_API_KEY` (required)
-- `OBSIDIAN_REST_API_URL`, `OBSIDIAN_REST_API_KEY` (required for Obsidian state)
-- Platform-specific keys (SUBSTACK_*, image API keys, DISQUS_*)
+Needs `.env` only for optional integrations:
+- `ANTHROPIC_API_KEY` when a selected route uses the Anthropic API directly
+- `OBSIDIAN_REST_API_URL`, `OBSIDIAN_REST_API_KEY` for optional Obsidian state
+- Platform-specific keys for publishing, image generation, or idea sources
+
+OpenCode provider authentication is configured with `opencode auth login`.
 
 See `.env.example` for the full list.
 
-Also used (not in `.env`):
-- `WRITERS_ROOM_PROFILE` — active profile id for the current shell/session
-- `WRITERS_ROOM_NTFY_ENABLED`, `WRITERS_ROOM_NTFY_THRESHOLD_SEC` — phone notification knobs (see "Phone Notifications" above)
-- `~/bin/ntfy-send.sh` — push-notification transport (optional)
-- `~/.config/ntfy/topic` — ntfy topic (single line, no secrets committed)
+Also used:
+- `WRITERS_ROOM_PROFILE` — active profile id for the interactive Claude Code session

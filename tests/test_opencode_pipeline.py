@@ -46,6 +46,36 @@ def test_prompt_resolves_profile_override_without_private_hardcoding(tmp_path):
     assert "the-linkedin-writer" not in prompt
 
 
+def test_prompt_rejects_override_path_escape(tmp_path):
+    root = tmp_path / "repo"
+    profile = root / "profiles/example"
+    profile.mkdir(parents=True)
+    outside = root / "private.md"
+    outside.write_text("PRIVATE")
+    (profile / "profile.yaml").write_text(
+        "agents:\n  drafter:\n    override_prompt: ../../private.md\n"
+    )
+    article = _article(tmp_path)
+
+    import pytest
+    from scripts.bullpen_runtime.opencode_pipeline import PipelineError
+
+    with pytest.raises(PipelineError, match="escapes"):
+        _prompt("draft", article, "example", root)
+
+
+def test_prompt_rejects_profile_path_escape(tmp_path):
+    root = tmp_path / "repo"
+    (root / "profiles").mkdir(parents=True)
+    article = _article(tmp_path)
+
+    import pytest
+    from scripts.bullpen_runtime.opencode_pipeline import PipelineError
+
+    with pytest.raises(PipelineError, match="profile escapes"):
+        _prompt("draft", article, "../outside", root)
+
+
 def test_pipeline_uses_one_resolved_route_set_per_stage(tmp_path, monkeypatch):
     article = _article(tmp_path)
     seen = []

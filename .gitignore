@@ -6,8 +6,20 @@ __pycache__/
 venv/
 *.egg-info/
 
-# Environment
+# Environment and credentials
 .env
+.env.*
+cookies*.json
+
+# Local drafts, profiles, and model policy
+cache/**
+!cache/.gitkeep
+config/model-policy.yaml
+profiles/*
+!profiles/example-blog/
+!profiles/example-blog/**
+!profiles/example-newsletter/
+!profiles/example-newsletter/**
 
 # macOS
 .DS_Store

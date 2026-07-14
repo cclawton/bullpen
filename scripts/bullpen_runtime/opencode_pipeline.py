@@ -18,6 +18,7 @@ from scripts.bullpen_runtime.model_policy import (
     load_model_policy,
     validate_model_policy,
 )
+from scripts.publication import MARKER
 
 PIPELINE_STAGES = ("research", "draft", "trimmer", "safety")
 STAGE_ROLES = {
@@ -26,9 +27,6 @@ STAGE_ROLES = {
     "trimmer": "trimmer",
     "safety": "safety-reviewer",
 }
-MARKER = "<!-- === PIPELINE NOTES — NOT FOR PUBLICATION === -->"
-
-
 class PipelineError(RuntimeError):
     """Raised when a stage fails or does not produce its required artefact."""
 
@@ -89,15 +87,38 @@ def _override_prompt(profile_text: str, role: str) -> str | None:
     return match.group(1).strip() if match else None
 
 
+def _contained_path(root: Path, relative_path: str, *, label: str) -> Path:
+    """Resolve a configured path and require it to remain below root."""
+    candidate = Path(relative_path)
+    if candidate.is_absolute():
+        raise PipelineError(f"{label} must be relative to {root}")
+    resolved_root = root.resolve()
+    resolved = (resolved_root / candidate).resolve()
+    try:
+        resolved.relative_to(resolved_root)
+    except ValueError as exc:
+        raise PipelineError(f"{label} escapes {resolved_root}") from exc
+    return resolved
+
+
 def _prompt(stage: str, article_dir: Path, profile: str, repo: Path) -> str:
-    profile_dir = repo / "profiles" / profile
+    profiles_root = (repo / "profiles").resolve()
+    profile_dir = _contained_path(profiles_root, profile, label="profile")
     profile_text = _read_optional(profile_dir / "profile.yaml")
     research_text = _read_optional(article_dir / "research.md")
     draft_text = _read_optional(article_dir / "draft.md")
     drafter_override = _override_prompt(profile_text, "drafter")
     safety_override = _override_prompt(profile_text, "safety")
-    persona = _read_optional(profile_dir / drafter_override) if drafter_override else ""
-    safety = _read_optional(profile_dir / safety_override) if safety_override else ""
+    persona = (
+        _read_optional(_contained_path(profile_dir, drafter_override, label="drafter override"))
+        if drafter_override
+        else ""
+    )
+    safety = (
+        _read_optional(_contained_path(profile_dir, safety_override, label="safety override"))
+        if safety_override
+        else ""
+    )
     target_text = research_text if stage == "research" else draft_text
     instructions = {
         "research": "Verify claim/source discipline and append a concise dated verification note.",

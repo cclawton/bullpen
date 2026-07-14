@@ -20,6 +20,8 @@ from dotenv import load_dotenv
 from rich.console import Console
 from rich.prompt import Confirm
 
+from scripts.publication import extract_public_copy
+
 load_dotenv()
 console = Console()
 
@@ -210,7 +212,13 @@ def publish(profile: str, slug: str, filepath: str, title: str, subtitle: str, d
         console.print("[red]Provide --slug or --file[/red]")
         return
 
-    word_count = len(content.split())
+    try:
+        public_content = extract_public_copy(content)
+    except ValueError as exc:
+        console.print(f"[red]Publication blocked: {exc}[/red]")
+        return
+
+    word_count = len(public_content.split())
     console.print(f"[bold]Article: {title}[/bold]")
     console.print(f"Profile: {profile} ({platform_type})")
     console.print(f"Words: {word_count}")
@@ -219,12 +227,12 @@ def publish(profile: str, slug: str, filepath: str, title: str, subtitle: str, d
         return
 
     if platform_type == "substack":
-        publish_substack(content, title, subtitle, draft_only, audience)
+        publish_substack(public_content, title, subtitle, draft_only, audience)
     elif platform_type == "linkedin":
-        publish_linkedin(content, title)
+        publish_linkedin(public_content, title)
     else:
         console.print(f"[yellow]Unknown platform: {platform_type}. Displaying content:[/yellow]")
-        console.print(content)
+        console.print(public_content)
 
 
 if __name__ == "__main__":

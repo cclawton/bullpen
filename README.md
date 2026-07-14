@@ -1,12 +1,17 @@
 # Bullpen
 
-A profile-driven AI writing pipeline with bounded OpenCode stages, role-specific model routing, and optional Claude Code compatibility.
+A profile-driven AI writing pipeline with human editorial control.
 
-Multiple specialist agents collaborate under a profile-driven workflow. The production-style OpenCode runner executes research, drafting, trimming, and safety as separate bounded processes. A deterministic Python layer owns validation and file writes, while `config/model-policy.example.yaml` chooses a model for each role. The original Claude Code agents remain available for interactive use.
+Bullpen supports two execution modes:
+
+- **Bounded OpenCode runner:** a fixed research, draft, trim, and safety sequence with role-specific model routing, structural validation, and rollback on rejection.
+- **Interactive Claude Code workflow:** flexible, editor-directed orchestration across research, drafting, structural analysis, polishing, safety review, images, and idea mining.
+
+Profiles keep voice, audience, constraints, and risk context separate from model choice. A deterministic Python layer owns file writes. The human editor decides what runs, reviews the output, and controls publication.
 
 The metaphor is a baseball bullpen: specialist relievers sitting ready, called in by the manager when the situation demands them.
 
-## How it works
+## Interactive workflow
 
 ```
                     ┌──────────────┐
@@ -22,29 +27,25 @@ The metaphor is a baseball bullpen: specialist relievers sitting ready, called i
    research.md draft.md  analysis  draft.md  draft.md  draft.md
 ```
 
-Each model receives only the context for one stage and returns a complete replacement between bounded sentinels. The runner validates the result and applies it transactionally. Models never independently explore or edit the filesystem.
+The diagram above describes the interactive Claude Code workflow. The editor can call specialist agents as needed rather than following a fixed sequence.
 
-The bounded runner uses a fixed four-stage safety sequence. The legacy interactive orchestrator remains editor-directed.
+## Bounded OpenCode runner
+
+The bounded runner uses a fixed four-stage sequence: research, draft, trimmer, and safety. Each stage runs in a fresh process and returns a complete replacement between output sentinels. Python applies structural checks and restores the previous file if validation fails. The bounded runner does not currently use a profile's custom pipeline order or optional-agent flags.
 
 ## Quick start
 
 ```bash
-git clone <this-repo>
+git clone https://github.com/cclawton/bullpen.git
 cd bullpen
 
 # 1. Install dependencies
 pip install -r requirements.txt
 
-# 2. Set up environment and provider authentication
-cp .env.example .env
-# edit .env with any Obsidian or publishing credentials you use
-# configure OpenCode providers with: opencode auth login
+# 2. Configure the OpenCode providers used by your model policy
+opencode auth login
 
-# 3. Set up Obsidian
-# Install the "Local REST API" plugin in Obsidian and create an API key.
-# Create the folder in your vault: Content/example-blog/articles/
-
-# 4. Create an article directory containing research.md and draft.md,
+# 3. Create an article directory containing research.md and draft.md,
 # then run the bounded mixture-of-models pipeline
 python3 -m scripts.bullpen_runtime.opencode_pipeline \
   "/absolute/path/to/article-directory" \
@@ -93,7 +94,7 @@ A profile is a content instance: one newsletter, one blog, one column. Each live
 - **Voice**: tone, register, spelling, banned words, style notes
 - **Content constraints**: word count, structure, link density
 - **Platform**: blog, Substack, LinkedIn, etc.
-- **Pipeline**: which agents run, in what order, and which are enabled
+- **Interactive pipeline**: which Claude Code agents run, in what order, and which are enabled
 - **Agent overrides**: optional richer persona prompts in `profiles/<id>/agents/`
 - **Obsidian integration**: vault paths
 - **Idea sources**: which Obsidian folders to scan
@@ -118,7 +119,9 @@ Two example profiles ship with the repo:
 
 ## State storage
 
-All article content lives in your Obsidian vault (via the Local REST API plugin), with a git-tracked cache in `cache/` for full audit history. Every agent step is committed.
+The bounded runner operates directly on an article directory containing `research.md` and `draft.md`. The optional interactive workflow can use an Obsidian vault through the Local REST API plugin.
+
+Real profiles, unpublished drafts, research notes, cookies, and local model policies are ignored by this public repository. Keep private article history outside this checkout or in a separate private repository.
 
 ```
 <vault_base>/articles/<slug>/
@@ -129,7 +132,7 @@ All article content lives in your Obsidian vault (via the Local REST API plugin)
   structure-analysis.md
   image-brief.md
 
-cache/<profile-id>/articles/<slug>/  ← mirror of the above, git-tracked
+cache/<profile-id>/articles/<slug>/  ← optional local mirror, ignored by git
 ```
 
 ## Scripts
@@ -153,7 +156,22 @@ cache/<profile-id>/articles/<slug>/  ← mirror of the above, git-tracked
 - Optional API keys:
   - Anthropic (only if your chosen route uses the Anthropic API)
   - Image generation (optional — FAL, OpenAI, or Ideogram)
-  - Substack credentials (optional — only for Substack publishing)
+  - Substack credentials (optional, only for Substack publishing)
+
+## Privacy and publication safety
+
+Models receive the selected profile and relevant article content. Do not place credentials, session cookies, confidential employer information, private publication details, or unrelated personal notes in profiles or article directories.
+
+Publishing requires exactly one pipeline-notes marker. Frontmatter and everything from that marker onward are removed at the publication boundary. Publication remains a human-confirmed action, and the generated public copy should be reviewed before sending it to any platform.
+
+## Development
+
+```bash
+python3 -m pip install -r requirements-dev.txt
+pytest -q
+```
+
+The unit suite does not call external model providers.
 
 ## License
 
