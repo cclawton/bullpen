@@ -165,4 +165,6 @@ For implementation details, design decisions, and conventions for modifying agen
 
 ## Part of a connected stack
 
-bullpen is the creative output layer. The supervisor agent (github.com/cclawton/supervisor) monitors bullpen draft output via the filesystem — when all pipeline stages complete on a draft, the supervisor classifies it and signals the author. Two independent systems, one shared filesystem, no direct coupling. See also: hexapla (github.com/cclawton/hexapla), asian-sentry-techniques (github.com/cclawton/asian-sentry-techniques), podcastindex-mcp-server (github.com/cclawton/podcastindex-mcp-server)
+Bullpen is the creative output layer. The [supervisor](https://github.com/cclawton/supervisor) can monitor completed draft output through the filesystem, classify it, and signal the author. The systems share files without sharing code or calling each other directly.
+
+Related projects: [hexapla](https://github.com/cclawton/hexapla), [music21-mcp](https://github.com/cclawton/music21-mcp), [reascript-mcp](https://github.com/cclawton/reascript-mcp), [asian-sentry-techniques](https://github.com/cclawton/asian-sentry-techniques), and [podcastindex-mcp-server](https://github.com/cclawton/podcastindex-mcp-server).
