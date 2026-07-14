@@ -2,11 +2,11 @@
 
 ## What This Is
 
-A profile-driven content pipeline that uses Claude Code subagents to research, draft, refine, and publish articles. The human editor-in-chief decides what happens. AI agents each have distinct roles. Personality and voice are configured per profile, not hardcoded.
+A profile-driven content pipeline with bounded OpenCode stages and optional Claude Code compatibility. The human editor-in-chief decides what happens. AI agents each have distinct roles. Personality, voice, and model routes are configured rather than hardcoded.
 
 ## Architecture
 
-The bullpen runs entirely within Claude Code using custom subagents (`.claude/agents/*.md`). A main orchestrator agent coordinates the workflow, delegating to specialist subagents. There is no fixed pipeline — the editor decides what happens next.
+The production-style runner launches research, draft, trimmer, and safety as separate bounded processes. OpenCode agents live in `.opencode/agent/`; the model policy lives in `config/model-policy.example.yaml`. A deterministic Python runner validates model output and owns file writes. The original `.claude/agents/*.md` workflow remains available for interactive use.
 
 ### Profiles
 
@@ -63,7 +63,26 @@ Local cache (git-tracked mirror):
 
 The orchestrator is the sole Obsidian proxy — it reads/writes via curl, passes content to agents, and syncs results back.
 
-## Running
+## Bounded OpenCode runtime
+
+```bash
+python3 -m scripts.bullpen_runtime.opencode_pipeline \
+  "/absolute/path/to/article-directory" \
+  --profile example-blog
+```
+
+Normal runs use the configured role-specific model routes. `--model` deliberately overrides the policy for every stage and is intended only for runtime experiments.
+
+Runtime invariants:
+
+- one fresh process per stage;
+- output-only model contract with sentinels;
+- transactional writes and rollback on rejection;
+- one bounded correction retry followed by policy fallback;
+- exactly one publication marker and one note per Trimmer/Safety stage;
+- no model-led filesystem exploration.
+
+## Legacy Claude Code runtime
 
 ```bash
 # Start the orchestrator
